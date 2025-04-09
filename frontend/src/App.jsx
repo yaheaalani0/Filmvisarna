@@ -1,38 +1,16 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import Movies from "./pages/Movies";
-import MovieDetails from "./pages/MovieDetails";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import MovieDetails from './pages/MovieDetails';
+import Navbar from './components/Navbar';
 
 function App() {
   return (
     <Router>
+      <Navbar />
       <Routes>
-        <Route
-          path="/"
-          element={
-            <Layout>
-              <Home />
-            </Layout>
-          }
-        />
-        <Route
-          path="/movies"
-          element={
-            <Layout>
-              <Movies />
-            </Layout>
-          }
-        />
-        <Route
-          path="/movies/:id"
-          element={
-            <Layout>
-              <MovieDetails />
-            </Layout>
-          }
-        />
+        <Route path="/" element={<Home />} />
+        <Route path="/movies/:id" element={<MovieDetails />} />
       </Routes>
     </Router>
   );
