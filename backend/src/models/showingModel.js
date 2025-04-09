@@ -1,4 +1,4 @@
-import db from '../db.js';
+import db from '../../db.js';
 
 export function addShowing(movie_id, date, time) {
   const stmt = db.prepare(`INSERT INTO showings (movie_id, date, time) VALUES (?, ?, ?)`);

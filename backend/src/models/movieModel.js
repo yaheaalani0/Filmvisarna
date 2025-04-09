@@ -1,4 +1,5 @@
-import db from '../db.js';
+import db from '../../db.js';
+
 
 export function addMovie(movie) {
   const stmt = db.prepare(`INSERT OR IGNORE INTO movies (title, year, imdbID, poster, plot) VALUES (?, ?, ?, ?, ?)`);
