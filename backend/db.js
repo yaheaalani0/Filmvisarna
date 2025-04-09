@@ -19,6 +19,12 @@ db.exec(`
     time TEXT,
     FOREIGN KEY(movie_id) REFERENCES movies(id)
   );
+
+  INSERT OR IGNORE INTO movies (title, year, imdbID, poster, trailer, plot)
+  VALUES ('Inception', '2010', 'tt1375666', 'https://example.com/poster.jpg', 'https://example.com/trailer.mp4', 'A mind-bending thriller.');
+
+  INSERT OR IGNORE INTO showings (movie_id, date, time)
+  VALUES (1, '2025-04-10', '18:00');
 `);
 
 export default db;
