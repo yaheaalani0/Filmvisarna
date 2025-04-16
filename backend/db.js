@@ -1,6 +1,8 @@
-import Database from 'better-sqlite3';
+import Database from "better-sqlite3";
 
-const db = new Database('database.db');
+const db = new Database("database.db");
+
+// Create tables if they don't exist
 db.exec(`
   CREATE TABLE IF NOT EXISTS movies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,10 +17,10 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS admins (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL
-    );
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+  );
 
   CREATE TABLE IF NOT EXISTS showings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,20 +30,24 @@ db.exec(`
     FOREIGN KEY(movie_id) REFERENCES movies(id)
   );
 
-  INSERT OR IGNORE INTO movies (title, year, imdbID, poster, trailer, plot, genre, runtime)
-  VALUES (
-    'Inception',
-    '2010',
-    'tt1375666',
-    'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg',
-    'https://www.youtube.com/watch?v=YoHD9XEInc0',
-    'Dom Cobb (Leonardo DiCaprio) is a thief with the rare ability to enter people''s dreams and steal their secrets from their subconscious. His skill has made him a hot commodity in the world of corporate espionage but has also cost him everything he loves. Cobb gets a chance at redemption when he is offered a seemingly impossible task: Plant an idea in someone''s mind. If he succeeds, it will be the perfect crime, but a dangerous enemy anticipates Cobb''s every move.',
-    'Sci-Fi, Thriller',
-    '148 min'
+  CREATE TABLE IF NOT EXISTS bookings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    movie_id INTEGER,
+    date TEXT,
+    time TEXT,
+    seats TEXT, -- Add this column to store selected seats
+    FOREIGN KEY(movie_id) REFERENCES movies(id)
   );
-
-  INSERT OR IGNORE INTO showings (movie_id, date, time)
-  VALUES (1, '2025-04-10', '18:00');
 `);
+
+// Check if the 'seats' column exists in the 'bookings' table
+const columnExists = db
+  .prepare(`PRAGMA table_info(bookings)`)
+  .all()
+  .some((column) => column.name === "seats");
+
+if (!columnExists) {
+  db.exec(`ALTER TABLE bookings ADD COLUMN seats TEXT;`);
+}
 
 export default db;
