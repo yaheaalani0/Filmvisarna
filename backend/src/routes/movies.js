@@ -29,4 +29,32 @@ router.post('/add', async (req, res) => {
   }
 });
 
+router.post('/', (req, res) => {
+  const { title, year, imdbID, poster, trailer, plot, genre, runtime } = req.body;
+
+  if (!title || !year || !imdbID) {
+    return res.status(400).json({ error: 'Missing required fields: title, year, or imdbID' });
+  }
+
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO movies (title, year, imdbID, poster, trailer, plot, genre, runtime)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const result = stmt.run(title, year, imdbID, poster, trailer, plot, genre, runtime);
+
+    // Automatically add a showing with time 18:00
+    const showingStmt = db.prepare(`
+      INSERT INTO showings (movie_id, date, time)
+      VALUES (?, ?, ?)
+    `);
+    showingStmt.run(result.lastInsertRowid, '2025-04-20', '18:00'); // Example date
+
+    res.status(201).json({ message: 'Movie and showing added successfully!' });
+  } catch (err) {
+    console.error('Error adding movie:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
