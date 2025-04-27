@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography,
   Card,
@@ -18,6 +18,7 @@ function MovieDetails() {
   const [loaded, setLoaded] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`http://localhost:3000/api/movies/${id}`)
@@ -181,6 +182,11 @@ function MovieDetails() {
                   </Box>
                 </Box>
               )}
+
+              {/* Booking Button */}
+              <Box mt={4}>
+                <button onClick={() => navigate('/booking')}>Boka Biljett</button>
+              </Box>
             </Box>
           </Card>
         </Container>
