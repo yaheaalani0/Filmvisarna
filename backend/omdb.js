@@ -1,19 +1,16 @@
 import axios from 'axios';
-import Database from 'better-sqlite3';
 import dotenv from 'dotenv';
-import db from './db.js';
+import db from './db.js';  // Make sure this path points to your db.js file
 
 dotenv.config();
-
 const OMDB_API_KEY = process.env.OMDB_API_KEY;
 
 const movieTitles = ['batman', 'The Matrix', 'Interstellar'];
 
 // Hämta filmdata från OMDb
 export async function fetchMovie(title) {
-  const url = `http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_API_KEY}&plot=full&r=json`;
+  const url = `http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${3e879038}&plot=full&r=json`;
   const response = await axios.get(url);
-
   if (response.data.Response === 'True') {
     return {
       title: response.data.Title,
@@ -43,7 +40,7 @@ function saveMovie(movie) {
     movie.year,
     movie.imdbID || '',
     movie.poster,
-    movie.trailer ,
+    movie.trailer,
     movie.plot,
     movie.genre,
     movie.runtime

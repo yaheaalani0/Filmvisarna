@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -10,6 +10,20 @@ import {
 import { Link } from 'react-router-dom';
 
 function Navbar() {
+  // Check if a token exists in localStorage to determine if the user is logged in
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('token'));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    setIsLoggedIn(false);
+    window.location.href = '/'; // Redirect to home after logout
+  };
+
   return (
     <AppBar
       position="sticky"
@@ -54,34 +68,57 @@ function Navbar() {
             >
               Hem
             </Button>
-            <Button
-              component={Link}
-              to="/movies"
-              sx={{
-                color: '#fff',
-                textTransform: 'none',
-                fontWeight: 500,
-                '&:hover': {
-                  color: '#ee0979',
-                },
-              }}
-            >
-              Filmer
-            </Button>
-            <Button
-              component={Link}
-              to="/admin"
-              sx={{
-                color: '#fff',
-                textTransform: 'none',
-                fontWeight: 500,
-                '&:hover': {
-                  color: '#00e5ff',
-                },
-              }}
-            >
-              Admin
-            </Button>
+
+            {/* If logged in, display logout and conditionally the Admin button */}
+            {isLoggedIn ? (
+              <>
+                {localStorage.getItem('role') === 'admin' && (
+                  <Button
+                    component={Link}
+                    to="/admin"
+                    sx={{
+                      color: '#fff',
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      '&:hover': {
+                        color: '#00e5ff',
+                      },
+                    }}
+                  >
+                    Admin
+                  </Button>
+                )}
+                <Button
+                  onClick={handleLogout}
+                  sx={{
+                    color: '#fff',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    '&:hover': {
+                      color: '#00e5ff',
+                    },
+                  }}
+                >
+                  Logga ut
+                </Button>
+              </>
+            ) : (
+              // If not logged in, show the Log in button
+              <Button
+                component={Link}
+                to="/login"
+                sx={{
+                  color: '#fff',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  '&:hover': {
+                    color: '#00e5ff',
+                  },
+                }}
+              >
+                Log in
+              </Button>
+            )}
           </Box>
         </Toolbar>
       </Container>

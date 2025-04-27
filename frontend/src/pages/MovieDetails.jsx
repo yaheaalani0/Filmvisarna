@@ -10,29 +10,43 @@ import {
   Fade,
   useTheme,
   useMediaQuery,
+  Button,
 } from '@mui/material';
 
 function MovieDetails() {
   const { id } = useParams();
   const [movie, setMovie] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState('');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/movies/${id}`)
-      .then((response) => response.json())
+    console.log("Fetching details for movie id:", id);
+    fetch(`http://localhost:5000/api/movies/${id}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => {
         setMovie(data);
         setTimeout(() => setLoaded(true), 200);
       })
-      .catch((error) => console.error('Error fetching movie details:', error));
+      .catch((err) => setError('Error fetching movie details: ' + err.message));
   }, [id]);
 
   const getYouTubeVideoId = (url) => {
     if (!url) return null;
-    const match = url.match(/(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/);
+    // Försök matcha fullständig YouTube URL
+    let match = url.match(/(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    // Försök matcha korta youtu.be länken
+    match = url.match(/(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?&]+)/);
     return match ? match[1] : null;
   };
 
@@ -46,6 +60,10 @@ function MovieDetails() {
     if (movie.runtime) parts.push(`${movie.runtime} min`);
     return parts.join(' • ');
   };
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   if (!movie || !loaded) {
     return (
@@ -78,6 +96,9 @@ function MovieDetails() {
         }}
       >
         <Container maxWidth="md">
+          <Button variant="contained" onClick={() => navigate(-1)} sx={{ mb: 2 }}>
+            Tillbaka
+          </Button>
           <Card
             elevation={10}
             sx={{
@@ -122,8 +143,7 @@ function MovieDetails() {
               </Typography>
               <Typography
                 variant="subtitle1"
-                color="text.secondary"
-                sx={{ opacity: 0.8, mb: 3, textAlign: 'center' }}
+                sx={{ color: '#fff', opacity: 0.8, mb: 3, textAlign: 'center' }}
               >
                 {formatMovieMeta() || 'Ingen information tillgänglig'}
               </Typography>

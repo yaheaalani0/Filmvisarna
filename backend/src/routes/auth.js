@@ -1,100 +1,52 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../../db.js';
 
 const router = express.Router();
-const SECRET_KEY = process.env.SECRET_KEY; // Byt ut mot en säker nyckel och spara i .env
+const JWT_SECRET = '123123'; // Updated secret
 
-// Registrering för admin
-router.post('/register', async (req, res) => {
+// Login endpoint
+router.post('/login', (req, res) => {
   const { username, password } = req.body;
-
   if (!username || !password) {
-    return res.status(400).json({ error: 'Användarnamn och lösenord krävs' });
+    return res.status(400).json({ error: 'Missing credentials' });
   }
 
-  try {
-    // Kontrollera om användaren redan finns
-    db.get('SELECT username FROM admins WHERE username = ?', [username], async (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: 'Databasfel' });
-      }
-      if (row) {
-        return res.status(400).json({ error: 'Användarnamn finns redan' });
-      }
-
-      // Kryptera lösenord
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Spara admin i databasen
-      db.run(
-        'INSERT INTO admins (username, password) VALUES (?, ?)',
-        [username, hashedPassword],
-        function (err) {
-          if (err) {
-            return res.status(500).json({ error: 'Kunde inte registrera admin' });
-          }
-          res.status(201).json({ message: 'Admin registrerad' });
-        }
-      );
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Serverfel' });
+  // Check admin table first
+  const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get(username);
+  if (admin && admin.password === password) {
+    const token = jwt.sign({ username, role: 'admin' }, JWT_SECRET, { expiresIn: '1h' });
+    return res.json({ token, role: 'admin' });
   }
+
+  // Check regular users table
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  if (user && user.password === password) {
+    const token = jwt.sign({ username, role: 'user' }, JWT_SECRET, { expiresIn: '1h' });
+    return res.json({ token, role: 'user' });
+  }
+
+  return res.status(401).json({ error: 'Invalid credentials' });
 });
 
-// Inloggning för admin
-router.post('/admin', (req, res) => {
+// Registration endpoint
+router.post('/register', (req, res) => {
   const { username, password } = req.body;
-
   if (!username || !password) {
-    return res.status(400).json({ error: 'Användarnamn och lösenord krävs' });
+    return res.status(400).json({ error: 'Missing username or password' });
   }
-
-  // Hämta admin från databasen
-  db.get('SELECT * FROM admins WHERE username = ?', [username], async (err, admin) => {
-    if (err) {
-      return res.status(500).json({ error: 'Databasfel' });
-    }
-    if (!admin) {
-      return res.status(401).json({ error: 'Fel användarnamn eller lösenord' });
-    }
-
-    // Jämför lösenord
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Fel användarnamn eller lösenord' });
-    }
-
-    // Skapa JWT-token
-    const token = jwt.sign({ id: admin.id, username: admin.username }, SECRET_KEY, {
-      expiresIn: '1h',
-    });
-
-    res.json({ token });
-  });
-});
-
-// Middleware för att skydda admin-rutter
-export const authenticateAdmin = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
-  }
-
   try {
-    const decoded = jwt.verify(token, SECRET_KEY);
-    req.admin = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Ogiltig token' });
+    const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+    const insert = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
+    insert.run(username, password);
+    const token = jwt.sign({ username, role: 'user' }, JWT_SECRET, { expiresIn: '1h' });
+    res.status(201).json({ token, role: 'user' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-};
-
-// Exempel på skyddad admin-rutt
-router.get('/admin/dashboard', authenticateAdmin, (req, res) => {
-  res.json({ message: `Välkommen, ${req.admin.username}!` });
 });
 
 export default router;

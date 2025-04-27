@@ -18,13 +18,19 @@ function Booking() {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [seatMap, setSeatMap] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
+  const [error, setError] = useState('');
 
   // Fetch movies from backend
   useEffect(() => {
-    fetch("http://localhost:3000/api/movies")
-      .then((response) => response.json())
+    fetch("http://localhost:5000/api/movies")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => setMovies(data))
-      .catch((error) => console.error("Error fetching movies:", error));
+      .catch((err) => setError('Error fetching movies: ' + err.message));
   }, []);
 
   const handleMovieChange = (movieId) => {
@@ -33,7 +39,8 @@ function Booking() {
     setSelectedTime('');
     setSelectedSeats([]);
 
-    fetch(`http://localhost:3000/api/showings/${movieId}`)
+    // Change the port from 3000 to 5000
+    fetch(`http://localhost:5000/api/showings/${movieId}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('No showings found for this movie');
@@ -76,10 +83,11 @@ function Booking() {
       seats: selectedSeats,
     };
   
-    console.log("Sending booking request to:", "http://localhost:3000/api/bookings");
+    // Update the URL to use port 5000
+    console.log("Sending booking request to:", "http://localhost:5000/api/bookings");
     console.log("Booking data:", bookingData);
   
-    fetch("http://localhost:3000/api/bookings", {
+    fetch("http://localhost:5000/api/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(bookingData),
@@ -88,7 +96,7 @@ function Booking() {
         if (response.ok) {
           alert("Booking successful!");
           setSelectedSeats([]); // Clear selected seats
-          fetchBookedSeats(); // Refetch booked seats to update the seat map
+          fetchBookedSeats(); // Refetch booked seats to update UI
         } else {
           alert("Failed to book. Please try again.");
         }
@@ -106,7 +114,8 @@ function Booking() {
       return;
     }
   
-    const url = `http://localhost:3000/api/bookings/booked-seats?movie_id=${selectedMovie}&date=${selectedDate}&time=${selectedTime}`;
+    // Update URL to use port 5000 instead of 3000
+    const url = `http://localhost:5000/api/bookings/booked-seats?movie_id=${selectedMovie}&date=${selectedDate}&time=${selectedTime}`;
     console.log('Fetching booked seats from:', url);
   
     fetch(url)
@@ -142,6 +151,10 @@ function Booking() {
     }
     setSeatMap(map);
   }, []);
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <Box

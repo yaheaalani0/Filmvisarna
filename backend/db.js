@@ -5,7 +5,7 @@ const db = new Database("database.db");
 // Create tables if they don't exist
 db.exec(`
   CREATE TABLE IF NOT EXISTS movies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     title TEXT,
     year TEXT,
     imdbID TEXT UNIQUE,
@@ -37,6 +37,12 @@ db.exec(`
     time TEXT,
     seats TEXT, -- Add this column to store selected seats
     FOREIGN KEY(movie_id) REFERENCES movies(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
   );
 `);
 
