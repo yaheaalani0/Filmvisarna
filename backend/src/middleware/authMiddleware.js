@@ -1,30 +1,30 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = '123123';
+const JWT_SECRET = process.env.JWT_SECRET_KEY || '123123';
 
 export function authenticateToken(req, res, next) {
-  console.log("Authorization header:", req.headers['authorization']);
+  console.log("Auth Middleware - Headers:", req.headers);
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   
   if (!token) {
-    console.error("No token provided.");
+    console.error("No token provided. Auth Header:", authHeader);
     return res.status(401).json({ error: 'No token provided' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      console.error("JWT verification error:", err);
-      return res.status(403).json({ error: 'Invalid token' });
-    }
-    console.log("Decoded token:", user);
-    req.user = user;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("Token verification successful:", decoded);
+    req.user = decoded;
     next();
-  });
+  } catch (err) {
+    console.error("JWT verification error:", err);
+    return res.status(403).json({ error: 'Invalid token' });
+  }
 }
 
 export function requireAdmin(req, res, next) {
-  console.log("Decoded token in requireAdmin:", req.user);
+  console.log("Admin check - User data:", req.user);
   if (req.user && req.user.role === 'admin') {
     next();
   } else {

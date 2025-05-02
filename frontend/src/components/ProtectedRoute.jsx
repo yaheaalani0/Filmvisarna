@@ -1,17 +1,24 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from './AuthContext';
 
 function ProtectedRoute({ children, requiredRole }) {
-  // Assume role and token are saved in localStorage after login
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role"); // Save role during login
+  const { isLoggedIn, userRole } = useAuth();
 
-  if (!token) {
+  if (!isLoggedIn) {
     return <Navigate to="/login" />;
   }
 
-  if (requiredRole && role !== requiredRole) {
-    return <Navigate to="/" />;
+  // If a specific role is required
+  if (requiredRole) {
+    // For admin routes, require admin role
+    if (requiredRole === 'admin' && userRole !== 'admin') {
+      return <Navigate to="/" />;
+    }
+    // For user routes, only allow non-admin users
+    if (requiredRole === 'user' && userRole === 'admin') {
+      return <Navigate to="/admin" />;
+    }
   }
 
   return children;

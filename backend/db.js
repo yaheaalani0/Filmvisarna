@@ -32,11 +32,13 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
     movie_id INTEGER,
     date TEXT,
     time TEXT,
-    seats TEXT, -- Add this column to store selected seats
-    FOREIGN KEY(movie_id) REFERENCES movies(id)
+    seats TEXT,
+    FOREIGN KEY(movie_id) REFERENCES movies(id),
+    FOREIGN KEY(user_id) REFERENCES users(id)
   );
 
   CREATE TABLE IF NOT EXISTS users (
@@ -46,14 +48,14 @@ db.exec(`
   );
 `);
 
-// Check if the 'seats' column exists in the 'bookings' table
+// Check if the user_id column exists in the bookings table
 const columnExists = db
   .prepare(`PRAGMA table_info(bookings)`)
   .all()
-  .some((column) => column.name === "seats");
+  .some((column) => column.name === "user_id");
 
 if (!columnExists) {
-  db.exec(`ALTER TABLE bookings ADD COLUMN seats TEXT;`);
+  db.exec(`ALTER TABLE bookings ADD COLUMN user_id INTEGER REFERENCES users(id);`);
 }
 
 export default db;

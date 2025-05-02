@@ -8,13 +8,29 @@ import {
   CardActionArea,
   CardMedia,
   CardContent,
+  Button,
+  Alert,
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthContext';
 
 const fallbackPoster = 'https://via.placeholder.com/300x450?text=Ingen+bild';
 
 // Local MovieCard component defined inline
 function MovieCard({ movie }) {
+  const { isLoggedIn, userRole } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBooking = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      navigate('/login');
+    } else {
+      navigate('/booking');
+    }
+  };
+
   return (
     <Grid item xs={12} sm={6} md={4} lg={3}>
       <Card
@@ -49,6 +65,21 @@ function MovieCard({ movie }) {
             <Typography variant="h6" noWrap>
               {movie.title}
             </Typography>
+            {userRole !== 'admin' && (
+              <Button
+                variant="contained"
+                onClick={handleBooking}
+                sx={{
+                  mt: 1,
+                  background: 'linear-gradient(45deg, #ff6a00, #ee0979)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #ff8533, #ff1a8c)',
+                  },
+                }}
+              >
+                {isLoggedIn ? 'Boka Nu' : 'Logga in för att boka'}
+              </Button>
+            )}
           </CardContent>
         </CardActionArea>
       </Card>
@@ -59,6 +90,7 @@ function MovieCard({ movie }) {
 function Home() {
   const [movies, setMovies] = useState([]);
   const [error, setError] = useState('');
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     fetch('http://localhost:5000/api/movies')
@@ -88,6 +120,11 @@ function Home() {
         >
           🎬 Aktuella Filmer
         </Typography>
+        {!isLoggedIn && (
+          <Alert severity="info" sx={{ mb: 4 }}>
+            Logga in för att kunna boka biljetter till våra filmer!
+          </Alert>
+        )}
         <Grid container spacing={4} justifyContent="center">
           {movies.map((movie) => (
             <MovieCard key={movie.id} movie={movie} />

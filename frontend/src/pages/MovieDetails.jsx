@@ -12,6 +12,7 @@ import {
   useMediaQuery,
   Button,
 } from '@mui/material';
+import { useAuth } from '../components/AuthContext';
 
 function MovieDetails() {
   const { id } = useParams();
@@ -21,6 +22,7 @@ function MovieDetails() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const { userRole } = useAuth();
 
   useEffect(() => {
     console.log("Fetching details for movie id:", id);
@@ -204,9 +206,31 @@ function MovieDetails() {
               )}
 
               {/* Booking Button */}
-              <Box mt={4}>
-                <button onClick={() => navigate('/booking')}>Boka Biljett</button>
-              </Box>
+              {userRole !== 'admin' && (
+                <Box mt={4}>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate('/booking')}
+                    sx={{
+                      background: 'linear-gradient(45deg, #ff6a00, #ee0979)',
+                      color: '#fff',
+                      padding: '10px 30px',
+                      fontSize: '1.1rem',
+                      textTransform: 'none',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #ff8533, #ff1a8c)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+                      },
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    Boka Biljett
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Card>
         </Container>

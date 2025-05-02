@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   AppBar,
   Toolbar,
@@ -7,21 +7,16 @@ import {
   Box,
   Container,
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 function Navbar() {
-  // Check if a token exists in localStorage to determine if the user is logged in
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
-
-  useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('token'));
-  }, []);
+  const navigate = useNavigate();
+  const { isLoggedIn, userRole, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    setIsLoggedIn(false);
-    window.location.href = '/'; // Redirect to home after logout
+    logout();
+    navigate('/');
   };
 
   return (
@@ -38,6 +33,8 @@ function Navbar() {
         <Toolbar disableGutters>
           <Typography
             variant="h5"
+            component={Link}
+            to="/"
             sx={{
               flexGrow: 1,
               fontWeight: 'bold',
@@ -48,6 +45,7 @@ function Navbar() {
               WebkitTextFillColor: 'transparent',
               letterSpacing: 1,
               textTransform: 'uppercase',
+              textDecoration: 'none',
             }}
           >
             Filmvisarna
@@ -69,10 +67,26 @@ function Navbar() {
               Hem
             </Button>
 
-            {/* If logged in, display logout and conditionally the Admin button */}
+            {isLoggedIn && userRole !== 'admin' && (
+              <Button
+                component={Link}
+                to="/bookings"
+                sx={{
+                  color: '#fff',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  '&:hover': {
+                    color: '#ff6a00',
+                  },
+                }}
+              >
+                Mina Bokningar
+              </Button>
+            )}
+
             {isLoggedIn ? (
               <>
-                {localStorage.getItem('role') === 'admin' && (
+                {userRole === 'admin' && (
                   <Button
                     component={Link}
                     to="/admin"
@@ -103,7 +117,6 @@ function Navbar() {
                 </Button>
               </>
             ) : (
-              // If not logged in, show the Log in button
               <Button
                 component={Link}
                 to="/login"
@@ -116,7 +129,7 @@ function Navbar() {
                   },
                 }}
               >
-                Log in
+                Logga in
               </Button>
             )}
           </Box>

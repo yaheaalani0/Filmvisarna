@@ -7,7 +7,9 @@ import {
   MenuItem,
   Button,
   Grid,
+  Alert,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 function Booking() {
   const [movies, setMovies] = useState([]);
@@ -19,9 +21,16 @@ function Booking() {
   const [seatMap, setSeatMap] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
-  // Fetch movies from backend
   useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
     fetch("http://localhost:5000/api/movies")
       .then((response) => {
         if (!response.ok) {
@@ -31,15 +40,15 @@ function Booking() {
       })
       .then((data) => setMovies(data))
       .catch((err) => setError('Error fetching movies: ' + err.message));
-  }, []);
+  }, [navigate, token]);
 
   const handleMovieChange = (movieId) => {
     setSelectedMovie(movieId);
     setSelectedDate('');
     setSelectedTime('');
     setSelectedSeats([]);
+    setError('');
 
-    // Change the port from 3000 to 5000
     fetch(`http://localhost:5000/api/showings/${movieId}`)
       .then((response) => {
         if (!response.ok) {
@@ -49,7 +58,6 @@ function Booking() {
       })
       .then((data) => {
         if (data.length === 0) {
-          // Add default showing if no showings exist
           const defaultShowing = { date: '2025-04-20', time: '18:00' };
           setAvailableShowings([defaultShowing]);
         } else {
@@ -72,7 +80,7 @@ function Booking() {
 
   const handleBooking = () => {
     if (!selectedMovie || !selectedDate || !selectedTime || selectedSeats.length === 0) {
-      alert("Please select a movie, date, time, and at least one seat.");
+      setError("Vänligen välj film, datum, tid och minst en plats.");
       return;
     }
   
@@ -83,41 +91,39 @@ function Booking() {
       seats: selectedSeats,
     };
   
-    // Update the URL to use port 5000
-    console.log("Sending booking request to:", "http://localhost:5000/api/bookings");
-    console.log("Booking data:", bookingData);
-  
     fetch("http://localhost:5000/api/bookings", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
       body: JSON.stringify(bookingData),
     })
       .then((response) => {
-        if (response.ok) {
-          alert("Booking successful!");
-          setSelectedSeats([]); // Clear selected seats
-          fetchBookedSeats(); // Refetch booked seats to update UI
-        } else {
-          alert("Failed to book. Please try again.");
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || "Bokningen misslyckades");
+          });
         }
+        return response.json();
       })
-      .catch((error) => console.error("Error booking:", error));
+      .then((data) => {
+        setMessage("Bokningen lyckades!");
+        setSelectedSeats([]); // Clear selected seats
+        fetchBookedSeats(); // Refetch booked seats to update UI
+      })
+      .catch((error) => {
+        setError(error.message);
+      });
   };
 
   const fetchBookedSeats = useCallback(() => {
     if (!selectedMovie || !selectedDate || !selectedTime) {
-      console.error('Missing required parameters:', {
-        selectedMovie,
-        selectedDate,
-        selectedTime,
-      });
-      return;
+      return; // Don't fetch if we don't have all required parameters
     }
   
-    // Update URL to use port 5000 instead of 3000
     const url = `http://localhost:5000/api/bookings/booked-seats?movie_id=${selectedMovie}&date=${selectedDate}&time=${selectedTime}`;
-    console.log('Fetching booked seats from:', url);
-  
+    
     fetch(url)
       .then((response) => {
         if (!response.ok) {
@@ -126,41 +132,37 @@ function Booking() {
         return response.json();
       })
       .then((data) => {
-        console.log('Booked seats:', data);
         setBookedSeats(data);
       })
-      .catch((error) => console.error('Error fetching booked seats:', error));
+      .catch((error) => {
+        console.error('Error fetching booked seats:', error);
+        setError('Det gick inte att hämta bokade platser');
+      });
   }, [selectedMovie, selectedDate, selectedTime]);
 
-  // Fetch booked seats whenever movie, date, or time changes
   useEffect(() => {
     fetchBookedSeats();
   }, [fetchBookedSeats]);
 
-  // Example seat map (5 rows x 7 columns)
   useEffect(() => {
-    const rows = 5; // Number of rows
-    const cols = 7; // Number of seats per row
+    const rows = 5;
+    const cols = 7;
     const map = [];
     for (let row = 0; row < rows; row++) {
       const rowSeats = [];
       for (let col = 0; col < cols; col++) {
-        rowSeats.push(`${String.fromCharCode(65 + row)}${col + 1}`); // A1, A2, etc.
+        rowSeats.push(`${String.fromCharCode(65 + row)}${col + 1}`);
       }
       map.push(rowSeats);
     }
     setSeatMap(map);
   }, []);
 
-  if (error) {
-    return <div>{error}</div>;
-  }
-
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        backgroundImage: 'url(/booking.jpg)', // Replace with your image path
+        backgroundImage: 'url(/booking.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -173,6 +175,19 @@ function Booking() {
         <Typography variant="h4" gutterBottom align="center">
           Boka Biljett
         </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+            {error}
+          </Alert>
+        )}
+
+        {message && (
+          <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage("")}>
+            {message}
+          </Alert>
+        )}
+
         <Box sx={{ mt: 3 }}>
           {/* Movie Dropdown */}
           <TextField
