@@ -138,110 +138,152 @@ function BookingPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        {userRole === 'admin' ? 'Alla Bokningar' : 'Mina Bokningar'}
-      </Typography>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        width: "100%",
+        backgroundColor: "#0d0d0d", // svart bakgrund över hela sidan
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        p: 2,
+      }}
+    >
+      <Container
+        maxWidth="lg"
+        sx={{
+          py: 4,
+          color: "white",
+        }}
+      >
+        <Typography variant="h4" gutterBottom align="center">
+          {userRole === "admin" ? "Alla Bokningar" : "Mina Bokningar"}
+        </Typography>
 
-      {message && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMessage("")}>
-          {message}
-        </Alert>
-      )}
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
-          {error}
-        </Alert>
-      )}
+        {message && (
+          <Alert
+            severity="success"
+            sx={{ mb: 2 }}
+            onClose={() => setMessage("")}
+          >
+            {message}
+          </Alert>
+        )}
 
-      {bookings.length === 0 ? (
-        <Typography>Inga bokningar hittades.</Typography>
-      ) : (
-        <Grid container spacing={3}>
-          {bookings.map((booking) => (
-            <Grid item xs={12} md={6} key={booking.booking_id}>
-              <Card>
-                <CardContent>
-                  <Grid container spacing={2}>
-                    <Grid item xs={4}>
-                      <img
-                        src={booking.poster}
-                        alt={booking.movie_title}
-                        style={{
-                          width: "100%",
-                          height: "auto",
-                          borderRadius: "4px",
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={8}>
-                      <Typography variant="h6">{booking.movie_title}</Typography>
-                      {userRole === 'admin' && (
-                        <Typography>
-                          <strong>Användare:</strong> {booking.user_name}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+            {error}
+          </Alert>
+        )}
+
+        {bookings.length === 0 ? (
+          <Typography>Inga bokningar hittades.</Typography>
+        ) : (
+          <Grid container spacing={3}>
+            {bookings.map((booking) => (
+              <Grid item xs={12} md={6} key={booking.booking_id}>
+                <Card
+                  sx={{
+                    backgroundColor: "#1c1c1c",
+                    color: "white",
+                    borderRadius: 2,
+                  }}
+                >
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      <Grid item xs={4}>
+                        <img
+                          src={booking.poster}
+                          alt={booking.movie_title}
+                          style={{
+                            width: "100%",
+                            height: "auto",
+                            borderRadius: "4px",
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={8}>
+                        <Typography variant="h6">
+                          {booking.movie_title}
                         </Typography>
-                      )}
-                      <Typography><strong>Datum:</strong> {booking.date}</Typography>
-                      <Typography><strong>Tid:</strong> {booking.time}</Typography>
-                      <Typography>
-                        <strong>Platser:</strong> {booking.seats.join(", ")}
-                      </Typography>
-                      <Box sx={{ mt: 2 }}>
-                        <Button
-                          variant="outlined"
-                          onClick={() => handleEdit(booking)}
-                          sx={{ mr: 1 }}
-                        >
-                          Ändra tid
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => handleDelete(booking.booking_id)}
-                        >
-                          Ta bort
-                        </Button>
-                      </Box>
+                        {userRole === "admin" && (
+                          <Typography>
+                            <strong>Användare:</strong> {booking.user_name}
+                          </Typography>
+                        )}
+                        <Typography>
+                          <strong>Datum:</strong> {booking.date}
+                        </Typography>
+                        <Typography>
+                          <strong>Tid:</strong> {booking.time}
+                        </Typography>
+                        <Typography>
+                          <strong>Pris:</strong> {booking.totalPrice} kr
+                        </Typography>
+                        <Typography>
+                          <strong>Platser:</strong> {booking.seats.join(", ")}
+                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => handleEdit(booking)}
+                            sx={{
+                              mr: 1,
+                              borderColor: "white",
+                              color: "white",
+                            }}
+                          >
+                            Ändra tid
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => handleDelete(booking.booking_id)}
+                            sx={{ borderColor: "white", color: "white" }}
+                          >
+                            Ta bort
+                          </Button>
+                        </Box>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-        <DialogTitle>Ändra bokningstid</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Nytt datum"
-            type="date"
-            value={newDate}
-            onChange={(e) => setNewDate(e.target.value)}
-            fullWidth
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            label="Ny tid"
-            type="time"
-            value={newTime}
-            onChange={(e) => setNewTime(e.target.value)}
-            fullWidth
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Avbryt</Button>
-          <Button onClick={handleUpdateBooking} variant="contained">
-            Uppdatera
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+          <DialogTitle>Ändra bokningstid</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Nytt datum"
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              fullWidth
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Ny tid"
+              type="time"
+              value={newTime}
+              onChange={(e) => setNewTime(e.target.value)}
+              fullWidth
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditDialogOpen(false)}>Avbryt</Button>
+            <Button onClick={handleUpdateBooking} variant="contained">
+              Uppdatera
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
   );
 }
 

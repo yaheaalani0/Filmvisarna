@@ -22,6 +22,13 @@ function Booking() {
   const [bookedSeats, setBookedSeats] = useState([]);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [adults, setAdults] = useState(0);
+  const [children, setChildren] = useState(0);
+  const [students, setStudents] = useState(0);
+  const priceAdult = 100;
+  const priceChild = 50;
+  const priceStudent = 75;
+  const totalPrice = adults * priceAdult + children * priceChild + students * priceStudent;
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -79,18 +86,28 @@ function Booking() {
   };
 
   const handleBooking = () => {
+    // Räkna totala antalet biljetter
+    const totalTickets = adults + children + students;
+    
+    // Kontrollera att film, datum, tid är valt samt att antal valda platser > 0
     if (!selectedMovie || !selectedDate || !selectedTime || selectedSeats.length === 0) {
       setError("Vänligen välj film, datum, tid och minst en plats.");
       return;
     }
-  
+    
+    // Ny validering: Antalet valda platser måste stämma överens med totala biljetter
+    if (selectedSeats.length !== totalTickets) {
+      setError(`Antalet valda platser (${selectedSeats.length}) stämmer inte överens med antalet biljetter (${totalTickets}).`);
+      return;
+    }
+    
     const bookingData = {
       movie_id: selectedMovie,
       date: selectedDate,
       time: selectedTime,
       seats: selectedSeats,
     };
-  
+    
     fetch("http://localhost:5000/api/bookings", {
       method: "POST",
       headers: { 
@@ -109,8 +126,8 @@ function Booking() {
       })
       .then((data) => {
         setMessage("Bokningen lyckades!");
-        setSelectedSeats([]); // Clear selected seats
-        fetchBookedSeats(); // Refetch booked seats to update UI
+        setSelectedSeats([]); // Rensa de valda platserna
+        fetchBookedSeats(); // Uppdatera UI med bokade platser
       })
       .catch((error) => {
         setError(error.message);
@@ -242,8 +259,57 @@ function Booking() {
                 </MenuItem>
               ))}
           </TextField>
+          
+          {/* Integrerade biljettpriser flyttade över salongsvyn */}
+          <Box sx={{ mt: 4, p: 3, backgroundColor: "#f5f5f5", borderRadius: 2 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>
+              Välj antal biljetter
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <TextField
+                label="Vuxna"
+                type="number"
+                value={adults}
+                onChange={(e) => setAdults(parseInt(e.target.value) || 0)}
+                sx={{ mr: 2, width: 100 }}
+                inputProps={{ min: 0 }}
+              />
+              <Typography variant="body1">
+                {priceAdult} kr per vuxen (Totalt: {adults * priceAdult} kr)
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <TextField
+                label="Barn"
+                type="number"
+                value={children}
+                onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
+                sx={{ mr: 2, width: 100 }}
+                inputProps={{ min: 0 }}
+              />
+              <Typography variant="body1">
+                {priceChild} kr per barn (Totalt: {children * priceChild} kr)
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <TextField
+                label="Studenter"
+                type="number"
+                value={students}
+                onChange={(e) => setStudents(parseInt(e.target.value) || 0)}
+                sx={{ mr: 2, width: 100 }}
+                inputProps={{ min: 0 }}
+              />
+              <Typography variant="body1">
+                {priceStudent} kr per student (Totalt: {students * priceStudent} kr)
+              </Typography>
+            </Box>
+            <Typography variant="h6" sx={{ mt: 3 }}>
+              Totalt: {totalPrice} kr
+            </Typography>
+          </Box>
 
-          {/* Seat Map */}
+          {/* Salongsvyn (seat map) */}
           <Box sx={{ mt: 4 }}>
             <Typography variant="h6" gutterBottom>
               Välj Platser

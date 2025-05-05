@@ -10,6 +10,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import Booking from "./pages/Booking";
 import BookingPage from "./pages/BookingPage";
+import Footer from "./components/Footer";
+import "./App.css";
 
 function App() {
   return (
@@ -39,6 +41,7 @@ function App() {
             } 
           />
         </Routes>
+        <Footer />
       </Router>
     </AuthProvider>
   );
