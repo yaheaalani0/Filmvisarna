@@ -4,6 +4,31 @@ import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js
 
 const router = express.Router();
 
+// Get all showings with movie details
+router.get('/', (req, res) => {
+  try {
+    const stmt = db.prepare(`
+      SELECT 
+        s.*,
+        m.id as movie_id,
+        m.title as movie_title,
+        m.poster,
+        m.year,
+        m.genre,
+        m.runtime,
+        m.plot
+      FROM showings s
+      JOIN movies m ON s.movie_id = m.id
+      ORDER BY s.date, s.time
+    `);
+    const showings = stmt.all();
+    res.json(showings);
+  } catch (err) {
+    console.error('Error fetching showings:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Add a new showing (admin only)
 router.post('/', authenticateToken, requireAdmin, (req, res) => {
   const { movie_id, date, time } = req.body;
@@ -83,6 +108,33 @@ router.post('/add-default-18', authenticateToken, requireAdmin, (req, res) => {
     res.json({ message: `Default 18:00 showing added for ${count} movies.` });
   } catch (err) {
     console.error("Error in POST /api/showings/add-default-18:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get showings by date
+router.get('/date/:date', (req, res) => {
+  const { date } = req.params;
+  try {
+    const stmt = db.prepare(`
+      SELECT 
+        s.*,
+        m.id as movie_id,
+        m.title as movie_title,
+        m.poster,
+        m.year,
+        m.genre,
+        m.runtime,
+        m.plot
+      FROM showings s
+      JOIN movies m ON s.movie_id = m.id
+      WHERE s.date = ?
+      ORDER BY s.time
+    `);
+    const showings = stmt.all(date);
+    res.json(showings);
+  } catch (err) {
+    console.error('Error fetching showings by date:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
