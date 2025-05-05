@@ -8,13 +8,17 @@ db.exec(`
     password TEXT NOT NULL
   );
 
-  CREATE TABLE IF NOT EXISTS users (
+  DROP TABLE IF EXISTS bookings;
+  DROP TABLE IF EXISTS users;
+  
+  CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
   );
 
-  CREATE TABLE IF NOT EXISTS bookings (
+  CREATE TABLE bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     movie_id INTEGER,

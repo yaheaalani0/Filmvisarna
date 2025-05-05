@@ -5,6 +5,7 @@ import { useAuth } from '../components/AuthContext';
 
 function Register() {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -14,11 +15,25 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
+    if (!username || !email || !password) {
+      setError("Alla fält måste fyllas i");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Var god ange en giltig e-postadress");
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, email, password }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -106,6 +121,25 @@ function Register() {
               fullWidth
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: '#ff6a00',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#ee0979',
+                  },
+                },
+              }}
+            />
+            <TextField
+              label="E-post"
+              variant="outlined"
+              type="email"
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               sx={{
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
