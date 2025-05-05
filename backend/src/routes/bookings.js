@@ -148,11 +148,14 @@ router.put("/:id", authenticateToken, async (req, res) => {
 // Delete booking
 router.delete("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id; // Get user ID directly from the token
+  const userId = req.user.id;
+  const isAdmin = req.user.role === 'admin';
 
   try {
-    // First check if the booking belongs to the user
-    const booking = db.prepare('SELECT * FROM bookings WHERE id = ? AND user_id = ?').get(id, userId);
+    // First check if the booking exists and if the user is authorized
+    const booking = isAdmin 
+      ? db.prepare('SELECT * FROM bookings WHERE id = ?').get(id)
+      : db.prepare('SELECT * FROM bookings WHERE id = ? AND user_id = ?').get(id, userId);
     
     if (!booking) {
       return res.status(404).json({ error: "Booking not found or unauthorized" });
@@ -181,7 +184,8 @@ router.get("/all", authenticateToken, requireAdmin, (req, res) => {
         b.seats,
         m.title as movie_title,
         m.poster,
-        u.username as user_name
+        u.username as user_name,
+        u.email as user_email
       FROM bookings b
       JOIN movies m ON b.movie_id = m.id
       JOIN users u ON b.user_id = u.id

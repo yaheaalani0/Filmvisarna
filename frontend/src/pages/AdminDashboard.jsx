@@ -29,6 +29,7 @@ function AdminDashboard() {
   const [allBookings, setAllBookings] = useState([]);
   const [bookingsError, setBookingsError] = useState('');
   const [movies, setMovies] = useState([]);
+  const [users, setUsers] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [showingDate, setShowingDate] = useState('');
   const [showingTime, setShowingTime] = useState('');
@@ -37,10 +38,11 @@ function AdminDashboard() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Fetch all movies and bookings when component mounts
+  // Fetch all movies, bookings, and users when component mounts
   useEffect(() => {
     fetchAllBookings();
     fetchMovies();
+    fetchUsers();
   }, []);
 
   const fetchMovies = async () => {
@@ -70,6 +72,23 @@ function AdminDashboard() {
       setAllBookings(data);
     } catch (err) {
       setBookingsError(err.message);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await response.json();
+      setUsers(data);
+    } catch (err) {
+      setMessage('Error fetching users: ' + err.message);
     }
   };
 
@@ -335,6 +354,58 @@ function AdminDashboard() {
           </Button>
         </Paper>
 
+        {/* Users Section */}
+        <Paper sx={{ 
+          p: { xs: 2, md: 3 }, 
+          mb: { xs: 2, md: 4 }, 
+          backgroundColor: '#1c1c1c', 
+          borderRadius: 2, 
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+        }}>
+          <Typography 
+            variant={isMobile ? "h6" : "h5"} 
+            gutterBottom 
+            sx={{ color: '#fff' }}
+          >
+            Användare
+          </Typography>
+          
+          {users.length > 0 ? (
+            <TableContainer>
+              <Table sx={{ 
+                '& .MuiTableCell-root': { 
+                  color: '#fff',
+                  padding: { xs: 1, md: 2 },
+                  fontSize: { xs: '0.8rem', md: '1rem' }
+                }
+              }}>
+                <TableHead>
+                  <TableRow sx={{ '& th': { color: '#ff6a00' } }}>
+                    <TableCell><strong>Användarnamn</strong></TableCell>
+                    <TableCell><strong>E-post</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id} sx={{
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                      }
+                    }}>
+                      <TableCell>{user.username}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography align="center" sx={{ py: 3, color: '#fff' }}>
+              Inga användare hittade
+            </Typography>
+          )}
+        </Paper>
+
         {/* All Bookings Section */}
         <Paper sx={{ 
           p: { xs: 2, md: 3 }, 
@@ -369,6 +440,7 @@ function AdminDashboard() {
                   <TableHead>
                     <TableRow sx={{ '& th': { color: '#ff6a00' } }}>
                       <TableCell><strong>Användare</strong></TableCell>
+                      <TableCell><strong>E-post</strong></TableCell>
                       <TableCell><strong>Film</strong></TableCell>
                       <TableCell><strong>Datum</strong></TableCell>
                       <TableCell><strong>Tid</strong></TableCell>
@@ -384,6 +456,7 @@ function AdminDashboard() {
                         }
                       }}>
                         <TableCell>{booking.user_name}</TableCell>
+                        <TableCell>{booking.user_email}</TableCell>
                         <TableCell>{booking.movie_title}</TableCell>
                         <TableCell>{booking.date}</TableCell>
                         <TableCell>{booking.time}</TableCell>
