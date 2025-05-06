@@ -19,7 +19,12 @@ import {
   TableRow,
   Autocomplete,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
 } from '@mui/material';
 
 function AdminDashboard() {
@@ -33,6 +38,9 @@ function AdminDashboard() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [showingDate, setShowingDate] = useState('');
   const [showingTime, setShowingTime] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingMovie, setEditingMovie] = useState(null);
+  const [newTrailer, setNewTrailer] = useState('');
 
   const token = localStorage.getItem('token');
   const theme = useTheme();
@@ -177,6 +185,59 @@ function AdminDashboard() {
     }
   };
 
+  const handleDeleteMovie = async (movieId) => {
+    if (!window.confirm('Är du säker på att du vill ta bort denna film?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/movies/${movieId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete movie');
+      }
+      
+      setMessage('Film borttagen!');
+      fetchMovies(); // Refresh movies list
+    } catch (err) {
+      setMessage('Error: ' + err.message);
+    }
+  };
+
+  const handleEditTrailer = (movie) => {
+    setEditingMovie(movie);
+    setNewTrailer(movie.trailer || '');
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateTrailer = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/movies/${editingMovie.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ trailer: newTrailer })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update trailer');
+      }
+
+      setMessage('Trailer uppdaterad!');
+      setEditDialogOpen(false);
+      fetchMovies(); // Refresh movies list
+    } catch (err) {
+      setMessage('Error: ' + err.message);
+    }
+  };
+
   return (
     <Box sx={{ backgroundColor: '#0d0d0d', minHeight: '100vh', py: { xs: 2, md: 4 } }}>
       <Container maxWidth="lg">
@@ -193,7 +254,7 @@ function AdminDashboard() {
           Admin Dashboard
         </Typography>
 
-        {/* Movie Management Section */}
+        {/* Movies Management Section */}
         <Paper sx={{ 
           p: { xs: 2, md: 3 }, 
           mb: { xs: 2, md: 4 }, 
@@ -206,9 +267,74 @@ function AdminDashboard() {
             gutterBottom 
             sx={{ color: '#fff' }}
           >
-            Lägg till Film
+            Hantera Filmer
           </Typography>
-          <Grid container spacing={2}>
+
+          {/* Movies List */}
+          <TableContainer>
+            <Table sx={{ 
+              '& .MuiTableCell-root': { 
+                color: '#fff',
+                padding: { xs: 1, md: 2 },
+                fontSize: { xs: '0.8rem', md: '1rem' }
+              }
+            }}>
+              <TableHead>
+                <TableRow sx={{ '& th': { color: '#ff6a00' } }}>
+                  <TableCell><strong>Titel</strong></TableCell>
+                  <TableCell><strong>År</strong></TableCell>
+                  <TableCell><strong>Trailer</strong></TableCell>
+                  <TableCell><strong>Åtgärder</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {movies.map((movie) => (
+                  <TableRow key={movie.id}>
+                    <TableCell>{movie.title}</TableCell>
+                    <TableCell>{movie.year}</TableCell>
+                    <TableCell>
+                      {movie.trailer ? 'Ja' : 'Nej'}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        onClick={() => handleEditTrailer(movie)}
+                        sx={{ 
+                          mr: 1,
+                          color: '#00e5ff',
+                          borderColor: '#00e5ff',
+                          '&:hover': {
+                            borderColor: '#00e5ff',
+                            backgroundColor: 'rgba(0, 229, 255, 0.1)'
+                          }
+                        }}
+                      >
+                        Redigera Trailer
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleDeleteMovie(movie.id)}
+                        sx={{
+                          color: '#ff1744',
+                          borderColor: '#ff1744',
+                          '&:hover': {
+                            borderColor: '#ff1744',
+                            backgroundColor: 'rgba(255, 23, 68, 0.1)'
+                          }
+                        }}
+                      >
+                        Ta Bort
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Add New Movie Section */}
+          <Grid container spacing={2} sx={{ mt: 3 }}>
             <Grid item xs={12}>
               <TextField
                 label="Filmtitel"
@@ -216,7 +342,6 @@ function AdminDashboard() {
                 value={movieTitle}
                 onChange={(e) => setMovieTitle(e.target.value)}
                 sx={{ 
-                  mb: { xs: 1, md: 2 },
                   '& .MuiOutlinedInput-root': {
                     color: '#fff',
                     '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
@@ -228,12 +353,11 @@ function AdminDashboard() {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Trailer URL (YouTube)"
+                label="Trailer URL"
                 fullWidth
                 value={trailer}
                 onChange={(e) => setTrailer(e.target.value)}
                 sx={{ 
-                  mb: { xs: 1, md: 2 },
                   '& .MuiOutlinedInput-root': {
                     color: '#fff',
                     '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
@@ -243,20 +367,20 @@ function AdminDashboard() {
                 }}
               />
             </Grid>
+            <Grid item xs={12}>
+              <Button 
+                variant="contained" 
+                onClick={addMovie}
+                sx={{
+                  background: 'linear-gradient(45deg, #ff6a00, #ee0979)',
+                  textTransform: 'none',
+                  fontWeight: 500
+                }}
+              >
+                Lägg till Film
+              </Button>
+            </Grid>
           </Grid>
-          <Button 
-            variant="contained" 
-            onClick={addMovie}
-            fullWidth={isMobile}
-            sx={{
-              background: 'linear-gradient(45deg, #ff6a00, #ee0979)',
-              textTransform: 'none',
-              fontWeight: 500,
-              mt: { xs: 1, md: 2 }
-            }}
-          >
-            Lägg till Film
-          </Button>
         </Paper>
 
         {/* Showing Management Section */}
@@ -494,6 +618,48 @@ function AdminDashboard() {
             </Typography>
           )}
         </Paper>
+
+        {/* Edit Trailer Dialog */}
+        <Dialog 
+          open={editDialogOpen} 
+          onClose={() => setEditDialogOpen(false)}
+          PaperProps={{
+            sx: {
+              backgroundColor: '#1c1c1c',
+              color: '#fff'
+            }
+          }}
+        >
+          <DialogTitle>Redigera Trailer</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Trailer URL"
+              type="text"
+              fullWidth
+              value={newTrailer}
+              onChange={(e) => setNewTrailer(e.target.value)}
+              sx={{ 
+                mt: 2,
+                '& .MuiOutlinedInput-root': {
+                  color: '#fff',
+                  '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.4)' },
+                },
+                '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditDialogOpen(false)} sx={{ color: '#fff' }}>
+              Avbryt
+            </Button>
+            <Button onClick={handleUpdateTrailer} variant="contained">
+              Uppdatera
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {message && (
           <Alert 
